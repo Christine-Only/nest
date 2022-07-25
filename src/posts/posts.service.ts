@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getRepository, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PostsEntity } from './posts.entity';
 
 export interface PostsRo {
@@ -29,13 +29,18 @@ export class PostsService {
 
   // 获取文章列表
   async findAll(query): Promise<PostsRo> {
-    const qb = await getRepository(PostsEntity).createQueryBuilder('post');
+    const qb = await this.postsRepository.createQueryBuilder('post');
     qb.where('1 = 1');
     qb.orderBy('post.create_time', 'DESC');
 
     const count = await qb.getCount();
     const { pageNum = 1, pageSize = 10, ...params } = query;
+
+    // select * from article LIMIT 3 OFFSET 1
+    // 当 limit和offset组合使用的时候，limit后面只能有一个参数，表示要取的的数量, offset表示要跳过的数量 。
+    // 查询pageSize条数据
     qb.limit(pageSize);
+
     qb.offset(pageSize * (pageNum - 1));
 
     const posts = await qb.getMany();
@@ -44,12 +49,12 @@ export class PostsService {
 
   // 获取指定文章
   async findById(id): Promise<PostsEntity> {
-    return await this.postsRepository.findOne(id);
+    return await this.postsRepository.findOne({ where: { id } });
   }
 
   // 更新文章
   async updateById(id, post): Promise<PostsEntity> {
-    const existPost = await this.postsRepository.findOne(id);
+    const existPost = await this.postsRepository.findOne({ where: { id } });
     if (!existPost) {
       throw new HttpException(`id为${id}的文章不存在`, 401);
     }

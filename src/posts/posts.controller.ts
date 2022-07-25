@@ -31,7 +31,7 @@ export class PostsController {
 
   @Put(':id')
   async updateById(@Param('id') id, @Body() post) {
-    return this.postsService.updateById(id, post);
+    return await this.postsService.updateById(id, post);
   }
 
   @Delete(':id')
